@@ -97,7 +97,7 @@ SelectableLocalIdentities.defaultProps = {
 }
 
 const ShareableLocalIdentities = React.memo(
-  ({ addressesSelected, identities, ...props }) => {
+  ({ addressesSelected, identities, dao, ...props }) => {
     const [shareModalOpen, setShareModalOpen] = React.useState(false)
     const inputRef = React.useRef()
     const buttonRef = React.useRef()
@@ -115,10 +115,11 @@ const ShareableLocalIdentities = React.memo(
       }
     })
     const shareLink = React.useMemo(() => {
-      const { origin, hash } = window.location
-      const base = `${origin}/${hash.substr(0, hash.indexOf('/', 2))}`
-      const labels = JSON.stringify(
-        identities.filter(({ address }) => addressesSelected.get(address))
+      const base = `${window.location.origin}/#/${dao}`
+      const labels = btoa(
+        JSON.stringify(
+          identities.filter(({ address }) => addressesSelected.get(address))
+        )
       )
       return `${base}?labels=${labels}`
     }, [identities, addressesSelected])
@@ -211,6 +212,7 @@ const ShareableLocalIdentities = React.memo(
         <LocalIdentities
           {...props}
           addressesSelected={addressesSelected}
+          dao={dao}
           identities={identities}
           onShare={handleShare}
         />
@@ -221,6 +223,7 @@ const ShareableLocalIdentities = React.memo(
 
 ShareableLocalIdentities.propTypes = {
   addressesSelected: PropTypes.instanceOf(Map).isRequired,
+  dao: PropTypes.string.isRequired,
   identities: PropTypes.array.isRequired,
 }
 
