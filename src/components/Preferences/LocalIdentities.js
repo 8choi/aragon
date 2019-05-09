@@ -4,10 +4,14 @@ import styled from 'styled-components'
 import { format } from 'date-fns'
 import {
   Button,
+  ButtonIcon,
   Checkbox,
+  IconCopy,
   IconCross,
   IdentityBadge,
   Info,
+  Modal,
+  TextInput,
   breakpoint,
   font,
   theme,
@@ -73,12 +77,12 @@ const SelectableLocalIdentities = React.memo(
     }, [initialAddressesSelected])
 
     return (
-      <LocalIdentities
+      <ShareableLocalIdentities
         {...props}
-        identities={identities}
-        onToggleAll={handleToggleAll}
-        onToggleAddress={handleToggleAddress}
         addressesSelected={addressesSelected}
+        identities={identities}
+        onToggleAddress={handleToggleAddress}
+        onToggleAll={handleToggleAll}
       />
     )
   }
@@ -97,6 +101,141 @@ SelectableLocalIdentities.defaultProps = {
   localIdentities: {},
 }
 
+const ShareableLocalIdentities = React.memo(
+  ({ addressesSelected, identities, ...props }) => {
+    const [shareModalOpen, setShareModalOpen] = React.useState(false)
+    const inputRef = React.useRef()
+    const buttonRef = React.useRef()
+
+    const handleShare = () => setShareModalOpen(true)
+    const handleClose = () => setShareModalOpen(false)
+    const handleFocus = () => inputRef.current.select()
+    const handleCopy = () => {
+      inputRef.current.focus()
+      inputRef.current.select()
+      try {
+        document.execCommand('copy')
+      } catch (err) {
+        console.warn(err)
+      }
+    }
+    const shareLink = React.useMemo(() => {
+      const { origin, hash } = window.location
+      const base = `${origin}/${hash.substr(0, hash.indexOf('/', 2))}`
+      const labels = JSON.stringify(
+        identities.filter(({ address }) => addressesSelected.get(address))
+      )
+      return `${base}?labels=${labels}`
+    }, [identities, addressesSelected])
+
+    React.useEffect(() => {
+      if (shareModalOpen) {
+        setTimeout(() => inputRef.current.focus(), 0)
+      }
+    }, [shareModalOpen])
+
+    return (
+      <React.Fragment>
+        <Modal visible={shareModalOpen} onClose={handleClose}>
+          <header>Share custom labels</header>
+          <main>
+            <div>
+              These labels will be shared with everyone that has access to this
+              link.
+            </div>
+            <label>
+              <div>Link</div>
+              <div
+                css={`
+                  display: inline-flex;
+                  max-width: 100%;
+                  height: 40px;
+                  position: relative;
+                  background: ${theme.contentBackground};
+                  border: 1px solid ${theme.contentBorder};
+                  border-radius: 3px;
+                  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+                  padding-right: 30px;
+                `}
+              >
+                <TextInput
+                  ref={inputRef}
+                  value={shareLink}
+                  onFocus={handleFocus}
+                  readOnly
+                  css={`
+                    text-overflow: ellipsis;
+                    width: 390px;
+                    max-width: 100%;
+                    border: 0;
+                    box-shadow: none;
+                    background: transparent;
+                    &:read-only {
+                      color: ${theme.textPrimary};
+                      text-shadow: none;
+                    }
+                  `}
+                />
+                <ButtonIcon
+                  ref={buttonRef}
+                  onClick={handleCopy}
+                  label="Copy to clipboard"
+                  css={`
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 39px;
+                    height: 38px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 0 3px 3px 0;
+                    &:active {
+                      background: rgba(220, 234, 239, 0.3);
+                    }
+                  `}
+                >
+                  <IconCopy />
+                </ButtonIcon>
+              </div>
+            </label>
+          </main>
+          <footer>
+            <Button label="Close modal" mode="secondary" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button
+              mode="strong"
+              label="Copy link to clipboard"
+              onClick={handleCopy}
+            >
+              Copy
+            </Button>
+          </footer>
+        </Modal>
+        <LocalIdentities
+          {...props}
+          addressesSelected={addressesSelected}
+          identities={identities}
+          onShare={handleShare}
+        />
+      </React.Fragment>
+    )
+  }
+)
+
+ShareableLocalIdentities.propTypes = {
+  addressesSelected: PropTypes.instanceOf(Map).isRequired,
+  dao: PropTypes.string.isRequired,
+  identities: PropTypes.array.isRequired,
+  onClearAll: PropTypes.func.isRequired,
+  onImport: PropTypes.func.isRequired,
+  onModify: PropTypes.func.isRequired,
+  onModifyEvent: PropTypes.func,
+  onToggleAddress: PropTypes.func.isRequired,
+  onToggleAll: PropTypes.func.isRequired,
+}
+
 const LocalIdentities = React.memo(
   ({
     addressesSelected,
@@ -106,6 +245,7 @@ const LocalIdentities = React.memo(
     onImport,
     onModify,
     onModifyEvent,
+    onShare,
     onToggleAddress,
     onToggleAll,
   }) => {
@@ -208,6 +348,14 @@ const LocalIdentities = React.memo(
               Export
             </StyledExport>
           )}
+          <Button
+            label="Share labels"
+            mode="secondary"
+            onClick={onShare}
+            disabled={!someSelected}
+          >
+            Share
+          </Button>
           <Button label="Remove labels" mode="outline" onClick={onClearAll}>
             <IconCross /> Remove all labels
           </Button>
@@ -226,6 +374,7 @@ LocalIdentities.propTypes = {
   onImport: PropTypes.func.isRequired,
   onModify: PropTypes.func.isRequired,
   onModifyEvent: PropTypes.func,
+  onShare: PropTypes.func.isRequired,
   onToggleAddress: PropTypes.func.isRequired,
   onToggleAll: PropTypes.func.isRequired,
 }
