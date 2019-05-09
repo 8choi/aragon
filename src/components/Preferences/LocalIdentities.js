@@ -100,7 +100,6 @@ const ShareableLocalIdentities = React.memo(
   ({ addressesSelected, identities, dao, ...props }) => {
     const [shareModalOpen, setShareModalOpen] = React.useState(false)
     const inputRef = React.useRef()
-    const buttonRef = React.useRef()
 
     const handleShare = React.useCallback(() => setShareModalOpen(true))
     const handleClose = React.useCallback(() => setShareModalOpen(false))
@@ -133,18 +132,41 @@ const ShareableLocalIdentities = React.memo(
     return (
       <React.Fragment>
         <Modal visible={shareModalOpen} onClose={handleClose}>
-          <header>Share custom labels</header>
-          <main>
-            <div>
+          <header
+            css={`
+              font-size: 22px;
+              line-height: 38px;
+              font-weight: bold;
+            `}
+          >
+            Share custom labels
+          </header>
+          <main style={{ marginTop: `${2 * GU}px` }}>
+            <div
+              css={`
+                font-size: 15px;
+                line-height: 22px;
+              `}
+            >
               These labels will be shared with everyone that has access to this
               link.
             </div>
-            <label>
-              <div>Link</div>
+            <div style={{ marginTop: `${2.5 * GU}px` }}>
+              <div
+                css={`
+                  font-size: 12px;
+                  line-height: 16px;
+                  text-transform: uppercase;
+                  color: ##6d777b;
+                `}
+              >
+                Link
+              </div>
               <div
                 css={`
                   display: inline-flex;
                   max-width: 100%;
+                  width: 100%;
                   height: 40px;
                   position: relative;
                   background: ${theme.contentBackground};
@@ -152,6 +174,7 @@ const ShareableLocalIdentities = React.memo(
                   border-radius: 3px;
                   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
                   padding-right: 30px;
+                  margin-top: ${1 * GU}px;
                 `}
               >
                 <TextInput
@@ -161,7 +184,7 @@ const ShareableLocalIdentities = React.memo(
                   readOnly
                   css={`
                     text-overflow: ellipsis;
-                    width: 390px;
+                    width: 100%;
                     max-width: 100%;
                     border: 0;
                     box-shadow: none;
@@ -173,7 +196,6 @@ const ShareableLocalIdentities = React.memo(
                   `}
                 />
                 <ButtonIcon
-                  ref={buttonRef}
                   onClick={handleCopy}
                   label="Copy to clipboard"
                   css={`
@@ -194,16 +216,38 @@ const ShareableLocalIdentities = React.memo(
                   <IconCopy />
                 </ButtonIcon>
               </div>
-            </label>
+            </div>
           </main>
-          <footer>
-            <Button label="Close modal" mode="secondary" onClick={handleClose}>
+          <footer
+            css={`
+              margin-top: ${3 * GU}px;
+              display: flex;
+              justify-content: space-between;
+
+              ${breakpoint(
+                'medium',
+                `
+                  display: block;
+                `
+              )}
+            `}
+          >
+            <Button
+              label="Close modal"
+              mode="secondary"
+              onClick={handleClose}
+              css={'width: 117px;'}
+            >
               Cancel
             </Button>
             <Button
               mode="strong"
               label="Copy link to clipboard"
               onClick={handleCopy}
+              css={`
+                width: 117px;
+                margin-left: ${2 * GU}px;
+              `}
             >
               Copy
             </Button>
@@ -329,24 +373,25 @@ const LocalIdentities = React.memo(
         <Controls>
           <Import onImport={onImport} />
           {!iOS && (
-            <StyledExport
+            <Button.Anchor
               label="Export labels"
               mode="secondary"
               download={`aragon-labels_${dao}_${today}.json`}
               href={someSelected ? downloadHref : undefined}
               disabled={!someSelected}
+              style={{ marginLeft: `${3 * GU}px` }}
             >
               Export
-            </StyledExport>
+            </Button.Anchor>
           )}
-          <Button
+          <StyledShare
             label="Share labels"
             mode="secondary"
             onClick={onShare}
             disabled={!someSelected}
           >
             Share
-          </Button>
+          </StyledShare>
           <Button label="Remove labels" mode="outline" onClick={onClearAll}>
             <IconCross /> Remove all labels
           </Button>
@@ -394,7 +439,7 @@ const Warning = React.memo(() => (
   </StyledInfoAction>
 ))
 
-const StyledExport = styled(Button.Anchor)`
+const StyledShare = styled(Button)`
   margin: 0 ${3 * GU}px ${3 * GU}px;
 `
 
